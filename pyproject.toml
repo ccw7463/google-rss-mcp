@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "google-rss-mcp"
+version = "0.1.0"
+description = ""
+authors = ["ccw7463 <ccw7463@example.com>"]
+readme = "README.md"
+
+# 포함할 패키지 지정
+packages = [
+    { include = "src" }
+]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+mcp = "^1.11.0"
+feedparser = "^6.0.11"
+requests = "^2.32.4"
+aiohttp = "^3.12.14"
+fastmcp = "^2.10.5"
+langchain = "^0.3.26"
+langchain-mcp-adapters = "^0.1.9"
+langgraph = "^0.5.2"
+langchain-openai = "^0.3.27"
+
+[tool.poetry.group.dev.dependencies]
+black = "^25.1.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
