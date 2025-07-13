@@ -3,10 +3,11 @@
 A Model Context Protocol (MCP) server that leverages Google News RSS feeds. Built on FastMCP framework, it enables AI agents to search and analyze the latest news from Google News.
 
 
-https://github.com/user-attachments/assets/584c38c0-c5dc-4219-b54e-bc8187f1b675
 
 
 ## Overview
+
+https://github.com/user-attachments/assets/584c38c0-c5dc-4219-b54e-bc8187f1b675
 
 This project is an MCP server that collects and provides news data using Google News RSS feeds. It's built using the FastMCP framework and includes workflow testing through LangGraph.
 
