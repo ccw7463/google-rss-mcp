@@ -4,6 +4,8 @@ A Model Context Protocol (MCP) server that leverages Google News RSS feeds. Buil
 
 <img width="400" height="400" alt="google_rss_mcp" src="https://github.com/user-attachments/assets/ea23e670-388d-44ac-b287-e74ef8fc309a" />
 
+https://smithery.ai/server/@ccw7463/google-rss-mcp
+
 ## Overview
 
 https://github.com/user-attachments/assets/584c38c0-c5dc-4219-b54e-bc8187f1b675
