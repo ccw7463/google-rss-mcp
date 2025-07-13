@@ -39,7 +39,8 @@ async def get_available_topics() -> List[str]:
 async def search_news(
     query: str, 
     max_results: int = 5,
-    max_length: int = 4000
+    max_length: int = 4000,
+    timeout: int = 10
 ) -> List[Dict[str, Any]]:
     """
     Search for news articles and extract their content in one operation.
@@ -52,6 +53,7 @@ async def search_news(
         query: Search query for news articles
         max_results: Maximum number of results to return (default: 5)
         max_length: Maximum length of article content in characters (default: 4000)
+        timeout: Timeout in seconds for HTTP requests (default: 10)
     
     Returns:
         List of article information dictionaries containing:
@@ -63,7 +65,7 @@ async def search_news(
     """
     
     try:
-        async with GoogleRSSTools() as rss_tools:
+        async with GoogleRSSTools(timeout=timeout) as rss_tools:
             results = await rss_tools.search_news(query, max_results, max_length)
             return results
     except Exception as e:
@@ -77,7 +79,8 @@ async def search_news(
 async def search_specific_topic_news(
     topic: str = "top", 
     max_results: int = 5,
-    max_length: int = 4000
+    max_length: int = 4000,
+    timeout: int = 10
 ) -> List[Dict[str, Any]]:
     """
     Search for news articles from specific topics and extract their content.
@@ -97,6 +100,7 @@ async def search_specific_topic_news(
             - "health": Health news
         max_results: Maximum number of results to return (default: 5)
         max_length: Maximum length of article content in characters (default: 4000)
+        timeout: Timeout in seconds for HTTP requests (default: 10)
     
     Returns:
         List of article information dictionaries containing:
@@ -108,7 +112,7 @@ async def search_specific_topic_news(
     """
     
     try:
-        async with GoogleRSSTools() as rss_tools:
+        async with GoogleRSSTools(timeout=timeout) as rss_tools:
             results = await rss_tools.search_specific_topic_news(topic, max_results, max_length)
             return results
     except Exception as e:

@@ -2,6 +2,7 @@
 import feedparser
 import requests
 import aiohttp
+import asyncio
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
 from dataclasses import dataclass, asdict
@@ -65,19 +66,22 @@ class GoogleRSSTools:
         language (str): Language code for RSS feeds (e.g., 'en', 'ja', 'zh', 'ko')
         region (str): Region code for RSS feeds (e.g., 'US', 'JP', 'CN', 'KR')
         headers (Dict[str, str]): HTTP headers for requests
+        timeout (int): Timeout in seconds for HTTP requests (default: 30)
     """
     
-    def __init__(self, language: str = "en", region: str = "US"):
+    def __init__(self, language: str = "en", region: str = "US", timeout: int = 10):
         """
         Initialize GoogleRSSTools with language and region settings.
         
         Args:
             language (str): Language code for RSS feeds (default: "en")
             region (str): Region code for RSS feeds (default: "US")
+            timeout (int): Timeout in seconds for HTTP requests (default: 10)
         """
         self.session = None
         self.language = language
         self.region = region
+        self.timeout = timeout
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
@@ -89,7 +93,8 @@ class GoogleRSSTools:
         Returns:
             GoogleRSSTools: Self instance with initialized session
         """
-        self.session = aiohttp.ClientSession(headers=self.headers)
+        timeout_config = aiohttp.ClientTimeout(total=self.timeout)
+        self.session = aiohttp.ClientSession(headers=self.headers, timeout=timeout_config)
         return self
     
     async def __aexit__(self, exc_type, exc_val, exc_tb):
@@ -125,16 +130,34 @@ class GoogleRSSTools:
                 - article_published: Publication date
                 - user_query: Original search query
         """
-        # Perform RSS search
-        rss_items = await self._get_news_list(query, max_results)
+        # Get all RSS items and process until we have enough successful results
+        rss_items = await self._get_news_list(query)
+        logger.info(f"[Tool : search_news] 💡 Found {len(rss_items)} items for query '{query}'")
         
         results = []
-        for item in rss_items:
-            article_data = await self._get_actual_url_and_content(rss_item=item, 
-                                                                  max_length=max_length)
-            article_data['user_query'] = query
-            results.append(article_data)
+        processed_count = 0
         
+        for item in rss_items:
+            if len(results) >= max_results:
+                break
+                
+            try:
+                article_data = await asyncio.wait_for(
+                    self._get_actual_url_and_content(rss_item=item, max_length=max_length),
+                    timeout=self.timeout
+                )
+                article_data['user_query'] = query
+                results.append(article_data)
+            except asyncio.TimeoutError:
+                logger.warning(f"Timeout processing article: {item.title}")
+                continue
+            except Exception as e:
+                logger.warning(f"Failed to process article '{item.title}': {str(e)}")
+                continue
+            
+            processed_count += 1
+        
+        logger.info(f"[Tool : search_news] ✅ Successfully processed {len(results)} out of {processed_count} attempted articles")
         return results
         
     async def search_specific_topic_news(self, topic: str, max_results: int = 5, max_length: int = 4000) -> List[Dict[str, Any]]:
@@ -168,25 +191,41 @@ class GoogleRSSTools:
         Raises:
             ValueError: If the specified topic is not supported
         """
-        # Perform RSS search for specific topic
-        rss_items = await self._get_specific_topic_news_list(topic, max_results)
+        # Get all RSS items and process until we have enough successful results
+        rss_items = await self._get_specific_topic_news_list(topic)
+        logger.info(f"[Tool : search_specific_topic_news] 💡 Found {len(rss_items)} items for topic '{topic}'")
         
         results = []
-        for item in rss_items:
-            article_data = await self._get_actual_url_and_content(rss_item=item, 
-                                                                  max_length=max_length)
-            article_data['topic'] = topic
-            results.append(article_data)
+        processed_count = 0
         
+        for item in rss_items:
+            if len(results) >= max_results:
+                break
+            try:
+                article_data = await asyncio.wait_for(
+                    self._get_actual_url_and_content(rss_item=item, max_length=max_length),
+                    timeout=self.timeout
+                )
+                article_data['topic'] = topic
+                results.append(article_data)
+            except asyncio.TimeoutError:
+                logger.warning(f"Timeout processing article: {item.title}")
+                continue
+            except Exception as e:
+                logger.warning(f"Failed to process article '{item.title}': {str(e)}")
+                continue
+            
+            processed_count += 1
+        
+        logger.info(f"[Tool : search_specific_topic_news] ✅ Successfully processed {len(results)} out of {processed_count} attempted articles for topic '{topic}'")
         return results
     
-    async def _get_news_list(self, query: str, max_results: int = 5) -> List[RSSItem]:
+    async def _get_news_list(self, query: str) -> List[RSSItem]:
         """
         Perform Google News RSS search for a given query.
         
         Args:
             query (str): Search query for news articles
-            max_results (int): Maximum number of results to return
             
         Returns:
             List[RSSItem]: List of RSS items matching the search query
@@ -197,18 +236,17 @@ class GoogleRSSTools:
         
         try:
             feed = await self._fetch_rss_feed(rss_url)
-            return feed.items[:max_results]
+            return feed.items
         except Exception as e:
             logger.error(f"Google News RSS search failed: {str(e)}")
             return []
     
-    async def _get_specific_topic_news_list(self, topic: str = "top", max_results: int = 5) -> List[RSSItem]:
+    async def _get_specific_topic_news_list(self, topic: str = "top") -> List[RSSItem]:
         """
         Get news articles from specific topics from Google News.
         
         Args:
             topic (str): Topic category to retrieve news from (default: "top")
-            max_results (int): Maximum number of results to return
             
         Returns:
             List[RSSItem]: List of RSS items from the specified topic
@@ -232,7 +270,7 @@ class GoogleRSSTools:
 
         try:
             feed = await self._fetch_rss_feed(topic_urls[topic])
-            return feed.items[:max_results]
+            return feed.items
         except Exception as e:
             logger.error(f"Failed to get Google News topic: {str(e)}")
             return []
@@ -257,7 +295,7 @@ class GoogleRSSTools:
                         raise Exception(f"HTTP {response.status}: {feed_url}")
                     content = await response.text()
             else:
-                response = requests.get(feed_url, headers=self.headers)
+                response = requests.get(feed_url, headers=self.headers, timeout=self.timeout)
                 response.raise_for_status()
                 content = response.text
             
@@ -337,7 +375,7 @@ class GoogleRSSTools:
         """
         try:
             if not self.session:
-                resp = requests.get(google_news_url, headers=self.headers)
+                resp = requests.get(google_news_url, headers=self.headers, timeout=self.timeout)
             else:
                 async with self.session.get(google_news_url) as resp:
                     if resp.status != 200:
@@ -369,7 +407,7 @@ class GoogleRSSTools:
             url = "https://news.google.com/_/DotsSplashUi/data/batchexecute"
             
             if not self.session:
-                response = requests.post(url, headers=headers, data=payload)
+                response = requests.post(url, headers=headers, data=payload, timeout=self.timeout)
                 response_text = response.text
             else:
                 async with self.session.post(url, headers=headers, data=payload) as response:
@@ -402,12 +440,14 @@ class GoogleRSSTools:
                 - article_content: Extracted and cleaned article content
         """
         try:
+            # Create a custom loader with timeout
             loader = AsyncHtmlLoader(url)
-            docs = await loader.aload()
+            # Set timeout for the loader
+            docs = await asyncio.wait_for(loader.aload(), timeout=self.timeout)
             
             if not docs:
                 return {'article_content': ''}
-            
+        
             html2text = Html2TextTransformer()
             docs = html2text.transform_documents(docs, metadata_type="html")
             
@@ -423,6 +463,9 @@ class GoogleRSSTools:
             
             return {'article_content': article_content}
             
+        except asyncio.TimeoutError:
+            logger.error(f"Timeout extracting article content from {url}")
+            return {'article_content': ''}
         except Exception as e:
             logger.error(f"Failed to extract article content from {url}: {str(e)}")
             return {'article_content': ''}

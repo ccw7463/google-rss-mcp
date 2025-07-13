@@ -5,6 +5,7 @@ from langgraph.prebuilt import ToolNode, tools_condition
 from langchain.chat_models import init_chat_model
 from dotenv import load_dotenv
 import os
+import time
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
@@ -87,8 +88,8 @@ async def main():
     
     # Execute search with more specific examples
     questions = [
-        "what's the latest news about AI?",
-        "search for technology news",
+        # "what's the latest news about AI?",
+        # "search for technology news",
         "get top business news"
     ]
     
@@ -138,9 +139,9 @@ async def main():
                 border_style="red"
             ))
         
-        # Add separator between tests
         if i < len(questions):
-            console.print("\n" + "="*80 + "\n")
+            console.print("\n\n\n")
+            time.sleep(2)
     
     # Footer
     console.print(Panel(
