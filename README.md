@@ -4,6 +4,8 @@ A Model Context Protocol (MCP) server that leverages Google News RSS feeds. Buil
 
 <img width="300" height="300" alt="google_rss_mcp" src="https://github.com/user-attachments/assets/ea23e670-388d-44ac-b287-e74ef8fc309a" />
 
+## Try on Smithery
+
 [![Smithery](https://img.shields.io/badge/Smithery-Add%20to%20your%20AI%20tools-blue?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJMMTMuMDkgOC4yNkwyMCA5TDEzLjA5IDkuNzRMMTIgMTZMMTAuOTEgOS43NEw0IDlMMTAuOTEgOC4yNkwxMiAyWiIgZmlsbD0iY3VycmVudENvbG9yIi8+Cjwvc3ZnPgo=)](https://smithery.ai/server/@ccw7463/google-rss-mcp)
 
 **Direct Link:** https://smithery.ai/server/@ccw7463/google-rss-mcp
@@ -34,6 +36,14 @@ google-rss-mcp/
 ```
 
 ## Getting Started
+
+### Installing via Smithery
+
+To install Google News RSS Feed Server for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@ccw7463/google-rss-mcp):
+
+```bash
+npx -y @smithery/cli install @ccw7463/google-rss-mcp --client claude
+```
 
 ### 1. Install uv
 
@@ -75,4 +85,3 @@ uv run python langgraph_test.py
 ```
 
 This command connects to the Google RSS MCP server and runs an AI news search workflow through LangGraph.
-
