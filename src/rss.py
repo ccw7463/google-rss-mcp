@@ -38,17 +38,13 @@ class RSSFeed:
 class GoogleRSSTools:
     """Tool class for processing Google RSS feeds"""
     
-    def __init__(self, language: str = "ko", region: str = "KR"):
+    def __init__(self):
         """
-        Initialize GoogleRSSTools with language and region settings.
-        
-        Args:
-            language (str): Language code (e.g., 'en', 'ko', 'ja', 'zh')
-            region (str): Region code (e.g., 'US', 'KR', 'JP', 'CN')
+        Initialize GoogleRSSTools with Korean language and region settings.
         """
         self.session = None
-        self.language = language
-        self.region = region
+        self.language = "en" # others : en, ja, zh, ko
+        self.region = "US" # others : US, JP, CN, KR
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }

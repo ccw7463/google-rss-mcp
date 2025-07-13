@@ -29,7 +29,8 @@ async def get_available_topics() -> List[str]:
     Returns:
         List of available topics
     """
-    return ["top", "world", "business", "technology", "entertainment", "sports", "science", "health"]
+    topics = ["top", "world", "business", "technology", "entertainment", "sports", "science", "health"]
+    return topics
 
 @mcp.tool(
     name="search_google_news",
@@ -37,9 +38,7 @@ async def get_available_topics() -> List[str]:
 )
 async def search_google_news(
     query: str, 
-    max_results: int = 10, 
-    language: str = "ko", 
-    region: str = "KR"
+    max_results: int = 10
 ) -> List[Dict[str, Any]]:
     """
     Performs a search on Google News RSS.
@@ -47,18 +46,17 @@ async def search_google_news(
     Args:
         query: Search keyword
         max_results: Maximum number of results (default: 10)
-        language: Language code (e.g., 'en', 'ko', 'ja', 'zh')
-        region: Region code (e.g., 'US', 'KR', 'JP', 'CN')
     
     Returns:
         List of search results
     """
+    
     try:
-        async with GoogleRSSTools(language=language, region=region) as rss_tools:
+        async with GoogleRSSTools() as rss_tools:
             results = await rss_tools.search_google_news_rss(query, max_results)
-            return [rss_tools.to_dict(item) for item in results]
+            formatted_results = [rss_tools.to_dict(item) for item in results]
+            return formatted_results
     except Exception as e:
-        print(f"Google News search failed: {str(e)}")
         return []
 
 @mcp.tool(
@@ -67,9 +65,7 @@ async def search_google_news(
 )
 async def get_google_news_topic(
     topic: str = "top", 
-    max_results: int = 10,
-    language: str = "en",
-    region: str = "US"
+    max_results: int = 10
 ) -> List[Dict[str, Any]]:
     """
     Gets news from a specific Google News topic.
@@ -77,18 +73,17 @@ async def get_google_news_topic(
     Args:
         topic: Topic category (top, world, business, technology, entertainment, sports, science, health)
         max_results: Maximum number of results (default: 10)
-        language: Language code (e.g., 'en', 'ko', 'ja', 'zh')
-        region: Region code (e.g., 'US', 'KR', 'JP', 'CN')
     
     Returns:
         List of news items from the specified topic
     """
+    
     try:
-        async with GoogleRSSTools(language=language, region=region) as rss_tools:
+        async with GoogleRSSTools() as rss_tools:
             results = await rss_tools.get_google_news_topics(topic, max_results)
-            return [rss_tools.to_dict(item) for item in results]
+            formatted_results = [rss_tools.to_dict(item) for item in results]
+            return formatted_results
     except Exception as e:
-        print(f"Failed to get Google News topic: {str(e)}")
         return []
 
 if __name__ == "__main__":

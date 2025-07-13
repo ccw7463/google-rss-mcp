@@ -5,10 +5,33 @@ from langgraph.prebuilt import ToolNode, tools_condition
 from langchain.chat_models import init_chat_model
 from dotenv import load_dotenv
 import os
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+from rich.align import Align
+
 load_dotenv()
 
+console = Console()
+
 async def main():
+    
+    # Header
+    console.print(Panel.fit(
+        "[bold blue]🤖 AI News Search with LangGraph & MCP[/bold blue]\n"
+        "[dim]Powered by Google RSS and OpenAI GPT-4o-mini[/dim]",
+        border_style="blue"
+    ))
+    
+    # Initialize model
     model = init_chat_model("openai:gpt-4o-mini", api_key=os.getenv("OPENAI_API_KEY", ""))
+    
+    # Initialize MCP client
+    console.print(Panel(
+        "[bold yellow]⛓️‍💥 Connecting to Google RSS MCP server...[/bold yellow]",
+        border_style="yellow"
+    ))
+    
     client = MultiServerMCPClient(
         {
             "google-rss-mcp": {
@@ -19,15 +42,36 @@ async def main():
         }
     )
     tools = await client.get_tools()
-    print(tools)
-
+    
+    console.print(Panel(
+        "[bold green]✅ MCP server connected successfully![/bold green]",
+        border_style="green"
+    ))
+    
+    # Display available tools
+    tools_table = Table(title="🔧 Available Google News RSS MCP Tools", 
+                        show_header=True, header_style="bold white")
+    tools_table.add_column("Tool Name", style="white", no_wrap=True)
+    tools_table.add_column("Description", style="white")
+    
+    for tool in tools:
+        tools_table.add_row(tool.name, tool.description)
+    
+    console.print(tools_table)
+    
+    # Build LangGraph
+    console.print(Panel(
+        "[bold yellow]⚙️ Building LangGraph workflow...[/bold yellow]",
+        border_style="yellow"
+    ))
+    
     def call_model(state: MessagesState):
         response = model.bind_tools(tools).invoke(state["messages"])
         return {"messages": response}
 
     builder = StateGraph(MessagesState)
-    builder.add_node(call_model)
-    builder.add_node(ToolNode(tools))
+    builder.add_node("call_model", call_model)
+    builder.add_node("tools", ToolNode(tools))
     builder.add_edge(START, "call_model")
     builder.add_conditional_edges(
         "call_model",
@@ -35,18 +79,73 @@ async def main():
     )
     builder.add_edge("tools", "call_model")
     graph = builder.compile()
-    response = await graph.ainvoke({"messages": "what's the latest news about AI?"})
     
-    # Print only the content of the last AI message
+    console.print(Panel(
+        "[bold green]✅ LangGraph workflow built successfully![/bold green]",
+        border_style="green"
+    ))
+    
+    # Execute search
+    question = "what's the latest news about AI?"
+    console.print(Panel(
+        f"[bold pink1]🔍 User Question: {question}[/bold pink1]",
+        border_style="pink1",
+        padding=(1, 2)
+    ))
+    
+    console.print(Panel(
+        "[bold yellow]🚀 Running LangGraph workflow...[/bold yellow]",
+        border_style="yellow"
+    ))
+    
+    response = await graph.ainvoke({"messages": question})
+    
+    console.print(Panel(
+        "[bold green]✅ Search completed successfully![/bold green]",
+        border_style="green"
+    ))
+    
+    # Display results
     messages = response["messages"]
     if messages and hasattr(messages[-1], 'content') and messages[-1].content:
-        print("\n" + "="*50)
-        print("AI News Search Result:")
-        print("="*50)
-        print(messages[-1].content)
-        print("="*50)
+        console.print(Panel(
+            Align.center("[bold magenta]AI News Search Results[/bold magenta]"),
+            border_style="magenta"
+        ))
+        
+        # Create a beautiful result display
+        result_content = messages[-1].content
+        
+        # Split content into sections if it contains multiple articles
+        if "Title:" in result_content or "Source:" in result_content:
+            # Format as structured news articles
+            articles = result_content.split("\n\n")
+            for i, article in enumerate(articles, 1):
+                if article.strip():
+                    console.print(Panel(
+                        f"[bold cyan]Article {i}[/bold cyan]\n\n{article}",
+                        border_style="cyan",
+                        padding=(1, 2)
+                    ))
+        else:
+            # Display as general content
+            console.print(Panel(
+                result_content,
+                title="[bold magenta]AI News Summary[/bold magenta]",
+                border_style="magenta",
+                padding=(1, 2)
+            ))
     else:
-        print("No response found.")
+        console.print(Panel(
+            "[bold red]❌ No response found[/bold red]",
+            border_style="red"
+        ))
+    
+    # Footer
+    console.print(Panel(
+        "[dim]✨ Search completed successfully![/dim]",
+        border_style="dim"
+    ))
 
 if __name__ == "__main__":
     asyncio.run(main())
