@@ -87,61 +87,52 @@ async def main():
     ))
     
     # Execute search with more specific examples
-    questions = [
-        # "what's the latest news about AI?",
-        # "search for technology news",
-        "get top business news"
-    ]
+    question = "what's the latest news about AI?"
     
-    for i, question in enumerate(questions, 1):
-        console.print(Panel(
-            f"[bold pink1]🔍 Test {i}: {question}[/bold pink1]",
-            border_style="pink1",
-            padding=(1, 2)
-        ))
+    console.print(Panel(
+        f"[bold pink1]🔍 {question}[/bold pink1]",
+        border_style="pink1",
+        padding=(1, 2)
+    ))
+    
+    console.print(Panel(
+        "[bold yellow]🚀 Running LangGraph workflow...[/bold yellow]",
+        border_style="yellow"
+    ))
+    
+    try:
+        response = await graph.ainvoke({"messages": question})
         
         console.print(Panel(
-            "[bold yellow]🚀 Running LangGraph workflow...[/bold yellow]",
-            border_style="yellow"
+            "[bold green]✅ Search completed successfully![/bold green]",
+            border_style="green"
         ))
         
-        try:
-            response = await graph.ainvoke({"messages": question})
+        # Display results
+        messages = response["messages"]
+        if messages and hasattr(messages[-1], 'content') and messages[-1].content:
             
+            # Create a beautiful result display
+            result_content = messages[-1].content
+            
+            # Display as general content
             console.print(Panel(
-                "[bold green]✅ Search completed successfully![/bold green]",
-                border_style="green"
+                result_content,
+                title=f"[bold magenta]AI News Summary[/bold magenta]",
+                border_style="magenta",
+                padding=(1, 2)
             ))
-            
-            # Display results
-            messages = response["messages"]
-            if messages and hasattr(messages[-1], 'content') and messages[-1].content:
-                
-                # Create a beautiful result display
-                result_content = messages[-1].content
-                
-                # Display as general content
-                console.print(Panel(
-                    result_content,
-                    title=f"[bold magenta]AI News Summary - Test {i}[/bold magenta]",
-                    border_style="magenta",
-                    padding=(1, 2)
-                ))
-            else:
-                console.print(Panel(
-                    "[bold red]❌ No response found[/bold red]",
-                    border_style="red"
-                ))
-                
-        except Exception as e:
+        else:
             console.print(Panel(
-                f"[bold red]❌ Error during search: {str(e)}[/bold red]",
+                "[bold red]❌ No response found[/bold red]",
                 border_style="red"
             ))
-        
-        if i < len(questions):
-            console.print("\n\n\n")
-            time.sleep(2)
+            
+    except Exception as e:
+        console.print(Panel(
+            f"[bold red]❌ Error during search: {str(e)}[/bold red]",
+            border_style="red"
+        ))
     
     # Footer
     console.print(Panel(
