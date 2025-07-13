@@ -1,8 +1,8 @@
 # google-rss-mcp
 
-A Model Context Protocol (MCP) server that leverages Google News RSS feeds. Built on FastMCP framework, it enables AI agents to search and analyze the latest news from Google News.
-
 <img width="400" height="400" alt="google_rss_mcp" src="https://github.com/user-attachments/assets/ea23e670-388d-44ac-b287-e74ef8fc309a" />
+
+A Model Context Protocol (MCP) server that leverages Google News RSS feeds. Built on FastMCP framework
 
 
 ## Overview
