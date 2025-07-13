@@ -1,6 +1,6 @@
 # google-rss-mcp
 
-A Model Context Protocol (MCP) server that leverages Google News RSS feeds. Built on FastMCP framework
+A Model Context Protocol (MCP) server that leverages Google News RSS feeds. Built on FastMCP
 
 <img width="300" height="300" alt="google_rss_mcp" src="https://github.com/user-attachments/assets/ea23e670-388d-44ac-b287-e74ef8fc309a" />
 
