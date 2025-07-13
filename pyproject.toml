@@ -18,6 +18,10 @@ dependencies = [
     "langgraph>=0.5.2",
     "langchain-openai>=0.3.27",
     "rich>=14.0.0",
+    "langchain-community>=0.3.27",
+    "html2text>=2025.4.15",
+    "tqdm>=4.67.1",
+    "beautifulsoup4>=4.12.2"
 ]
 
 [project.optional-dependencies]

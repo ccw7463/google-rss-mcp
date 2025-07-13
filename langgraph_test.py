@@ -18,7 +18,7 @@ async def main():
     
     # Header
     console.print(Panel.fit(
-        "[bold blue]🤖 AI News Search with LangGraph & MCP[/bold blue]\n"
+        "[bold blue]🤖 AI News Search with LangGraph & FastMCP[/bold blue]\n"
         "[dim]Powered by Google RSS and OpenAI GPT-4o-mini[/dim]",
         border_style="blue"
     ))
@@ -28,7 +28,7 @@ async def main():
     
     # Initialize MCP client
     console.print(Panel(
-        "[bold yellow]⛓️‍💥 Connecting to Google RSS MCP server...[/bold yellow]",
+        "[bold yellow]⛓️‍💥 Connecting to Google RSS FastMCP server...[/bold yellow]",
         border_style="yellow"
     ))
     
@@ -44,12 +44,12 @@ async def main():
     tools = await client.get_tools()
     
     console.print(Panel(
-        "[bold green]✅ MCP server connected successfully![/bold green]",
+        "[bold green]✅ FastMCP server connected successfully![/bold green]",
         border_style="green"
     ))
     
     # Display available tools
-    tools_table = Table(title="🔧 Available Google News RSS MCP Tools", 
+    tools_table = Table(title="🔧 Available Google News RSS FastMCP Tools", 
                         show_header=True, header_style="bold white")
     tools_table.add_column("Tool Name", style="white", no_wrap=True)
     tools_table.add_column("Description", style="white")
@@ -85,65 +85,66 @@ async def main():
         border_style="green"
     ))
     
-    # Execute search
-    question = "what's the latest news about AI?"
-    console.print(Panel(
-        f"[bold pink1]🔍 User Question: {question}[/bold pink1]",
-        border_style="pink1",
-        padding=(1, 2)
-    ))
+    # Execute search with more specific examples
+    questions = [
+        "what's the latest news about AI?",
+        "search for technology news",
+        "get top business news"
+    ]
     
-    console.print(Panel(
-        "[bold yellow]🚀 Running LangGraph workflow...[/bold yellow]",
-        border_style="yellow"
-    ))
-    
-    response = await graph.ainvoke({"messages": question})
-    
-    console.print(Panel(
-        "[bold green]✅ Search completed successfully![/bold green]",
-        border_style="green"
-    ))
-    
-    # Display results
-    messages = response["messages"]
-    if messages and hasattr(messages[-1], 'content') and messages[-1].content:
+    for i, question in enumerate(questions, 1):
         console.print(Panel(
-            Align.center("[bold magenta]AI News Search Results[/bold magenta]"),
-            border_style="magenta"
+            f"[bold pink1]🔍 Test {i}: {question}[/bold pink1]",
+            border_style="pink1",
+            padding=(1, 2)
         ))
         
-        # Create a beautiful result display
-        result_content = messages[-1].content
+        console.print(Panel(
+            "[bold yellow]🚀 Running LangGraph workflow...[/bold yellow]",
+            border_style="yellow"
+        ))
         
-        # Split content into sections if it contains multiple articles
-        if "Title:" in result_content or "Source:" in result_content:
-            # Format as structured news articles
-            articles = result_content.split("\n\n")
-            for i, article in enumerate(articles, 1):
-                if article.strip():
-                    console.print(Panel(
-                        f"[bold cyan]Article {i}[/bold cyan]\n\n{article}",
-                        border_style="cyan",
-                        padding=(1, 2)
-                    ))
-        else:
-            # Display as general content
+        try:
+            response = await graph.ainvoke({"messages": question})
+            
             console.print(Panel(
-                result_content,
-                title="[bold magenta]AI News Summary[/bold magenta]",
-                border_style="magenta",
-                padding=(1, 2)
+                "[bold green]✅ Search completed successfully![/bold green]",
+                border_style="green"
             ))
-    else:
-        console.print(Panel(
-            "[bold red]❌ No response found[/bold red]",
-            border_style="red"
-        ))
+            
+            # Display results
+            messages = response["messages"]
+            if messages and hasattr(messages[-1], 'content') and messages[-1].content:
+                
+                # Create a beautiful result display
+                result_content = messages[-1].content
+                
+                # Display as general content
+                console.print(Panel(
+                    result_content,
+                    title=f"[bold magenta]AI News Summary - Test {i}[/bold magenta]",
+                    border_style="magenta",
+                    padding=(1, 2)
+                ))
+            else:
+                console.print(Panel(
+                    "[bold red]❌ No response found[/bold red]",
+                    border_style="red"
+                ))
+                
+        except Exception as e:
+            console.print(Panel(
+                f"[bold red]❌ Error during search: {str(e)}[/bold red]",
+                border_style="red"
+            ))
+        
+        # Add separator between tests
+        if i < len(questions):
+            console.print("\n" + "="*80 + "\n")
     
     # Footer
     console.print(Panel(
-        "[dim]✨ Search completed successfully![/dim]",
+        "[dim]✨ All tests completed successfully![/dim]",
         border_style="dim"
     ))
 
