@@ -160,3 +160,27 @@ def test_fetch_failure_message_is_actionable(status, needle):
     from google_rss_mcp.rss import _fetch_failure_message
 
     assert needle in _fetch_failure_message("https://x/a", status)
+
+
+def test_fallback_version_matches_pyproject():
+    """The hardcoded fallback must not drift from the packaged version."""
+    import tomllib
+    from pathlib import Path
+
+    import google_rss_mcp
+
+    pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
+    declared = tomllib.loads(pyproject.read_text())["project"]["version"]
+    assert google_rss_mcp.__version__ == declared
+
+
+def test_deployment_entrypoint_exposes_server():
+    """main.py:mcp is what managed hosts load; keep it importable."""
+    import importlib.util
+    from pathlib import Path
+
+    path = Path(__file__).resolve().parents[1] / "main.py"
+    spec = importlib.util.spec_from_file_location("_entrypoint", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    assert module.mcp.name == "google-rss-mcp"

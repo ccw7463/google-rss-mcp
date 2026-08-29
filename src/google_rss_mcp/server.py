@@ -21,6 +21,7 @@ from fastmcp.server.middleware.rate_limiting import RateLimitingMiddleware
 from fastmcp.server.middleware.timing import TimingMiddleware
 from pydantic import Field
 
+from google_rss_mcp import __version__ as _FALLBACK_VERSION
 from google_rss_mcp.config import Settings
 from google_rss_mcp.rss import TOPIC_PATHS, GoogleNewsClient
 
@@ -30,8 +31,8 @@ SETTINGS = Settings.from_env()
 
 try:
     VERSION = version("google-rss-mcp")
-except PackageNotFoundError:  # running from a source checkout
-    VERSION = "0.0.0.dev0"
+except PackageNotFoundError:  # loaded from source, e.g. by a managed host
+    VERSION = _FALLBACK_VERSION
 
 Topic = Literal[
     "top",

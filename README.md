@@ -88,13 +88,36 @@ uv run google-rss-mcp
 Remote MCP clients — and Smithery's URL publishing flow — need a Streamable HTTP
 endpoint rather than stdio.
 
+### Managed: Prefect Horizon (recommended)
+
+[Horizon](https://horizon.prefect.io) is built by the FastMCP team and has a free
+personal tier. Connect the GitHub repo, then set:
+
+- **Entrypoint**: `main.py:mcp`
+- **Environment**: `GOOGLE_RSS_LANGUAGE` / `GOOGLE_RSS_REGION` if you want a fixed locale
+
+Dependencies are detected from `pyproject.toml`, and pushes to `main` redeploy
+automatically. You get `https://<server-name>.fastmcp.app/mcp`, which is exactly
+the kind of URL Smithery's URL publishing flow accepts.
+
+Verify locally what Horizon will see:
+
+```bash
+uv run fastmcp inspect main.py:mcp
+```
+
+`main.py` exists so the server loads whether or not the host pip-installs the
+project itself; it puts `src/` on the path and re-exports `mcp`.
+
+### Self-hosted: Docker
+
 ```bash
 docker build -t google-rss-mcp .
 docker run -p 8081:8081 -e GOOGLE_RSS_LANGUAGE=ko -e GOOGLE_RSS_REGION=KR google-rss-mcp
 ```
 
 The endpoint is then `http://localhost:8081/mcp`. The image reads `$PORT`, so it
-deploys as-is to Railway, Fly.io, Render, or Cloud Run. Without Docker:
+deploys as-is to Railway, Fly.io, or Cloud Run. Without Docker:
 
 ```bash
 MCP_TRANSPORT=http PORT=8081 uv run google-rss-mcp
