@@ -17,6 +17,9 @@ Search and headline calls return **headlines only**. The agent picks what is wor
 reading and calls `read_article` on those, which keeps a typical news lookup to a
 few hundred tokens instead of tens of thousands.
 
+When served over HTTP the server also answers `GET /health` with a small JSON
+status document, for platform health checks.
+
 Google News wraps every link in an encrypted `news.google.com/rss/articles/...`
 redirect. This server resolves those to the real publisher URL by default, so
 answers can cite a source the user can actually open. Pass `resolve_urls: false`
@@ -114,6 +117,27 @@ uv run fastmcp inspect main.py:mcp
 
 `main.py` exists so the server loads whether or not the host pip-installs the
 project itself; it puts `src/` on the path and re-exports `mcp`.
+
+Note that Horizon's free Personal tier restricts connections to members of your
+organization. Serving anonymous users — which is what a public registry listing
+means — needs its paid Developer plan. For a public deployment, use one of the
+options below.
+
+### Public and free: Koyeb
+
+Koyeb builds the `Dockerfile` straight from GitHub, needs no credit card, and
+does not sleep. Create a Web Service from this repo with:
+
+| Setting | Value |
+| --- | --- |
+| Builder | Dockerfile |
+| Instance | Free |
+| Exposed port | `8000` |
+| Health check | HTTP, path `/health` |
+| Environment | `PORT=8000` |
+
+Leave `GOOGLE_RSS_LANGUAGE` unset so the public instance stays locale-neutral.
+The container idles at roughly 70 MB, well inside the free instance's 512 MB.
 
 ### Self-hosted: Docker
 

@@ -184,3 +184,17 @@ def test_deployment_entrypoint_exposes_server():
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     assert module.mcp.name == "google-rss-mcp"
+
+
+async def test_health_route_reports_ok():
+    """Platform health checks need a 2xx on /health without any network call."""
+    from starlette.testclient import TestClient
+
+    from google_rss_mcp.server import mcp
+
+    with TestClient(mcp.http_app()) as client:
+        response = client.get("/health")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "ok"
+    assert body["default_language"] == "en"

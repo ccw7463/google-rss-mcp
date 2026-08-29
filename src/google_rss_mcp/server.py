@@ -20,6 +20,8 @@ from fastmcp.server.middleware.error_handling import ErrorHandlingMiddleware
 from fastmcp.server.middleware.rate_limiting import RateLimitingMiddleware
 from fastmcp.server.middleware.timing import TimingMiddleware
 from pydantic import Field
+from starlette.requests import Request
+from starlette.responses import JSONResponse
 
 from google_rss_mcp import __version__ as _FALLBACK_VERSION
 from google_rss_mcp.config import Settings
@@ -239,6 +241,31 @@ async def read_article(
     async with _client(None, None) as news:
         article = await news.read_article(url, max_length)
     return article.to_dict()
+
+
+@mcp.custom_route("/health", methods=["GET"])
+async def health(_request: Request) -> JSONResponse:
+    """Report liveness for platform health checks.
+
+    Hosts (Koyeb, Cloud Run, Fly) probe an HTTP path and treat a non-2xx as a
+    failed deploy. Every other path on this server is the MCP endpoint or a 404,
+    so expose one cheap route that never touches the network.
+
+    Args:
+        _request: Unused; present to satisfy the Starlette route signature.
+
+    Returns:
+        200 with the server version and the locale defaults in force.
+    """
+    return JSONResponse(
+        {
+            "status": "ok",
+            "server": "google-rss-mcp",
+            "version": VERSION,
+            "default_language": SETTINGS.language,
+            "default_region": SETTINGS.region,
+        }
+    )
 
 
 def main() -> None:
