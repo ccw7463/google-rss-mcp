@@ -94,7 +94,13 @@ endpoint rather than stdio.
 personal tier. Connect the GitHub repo, then set:
 
 - **Entrypoint**: `main.py:mcp`
-- **Environment**: `GOOGLE_RSS_LANGUAGE` / `GOOGLE_RSS_REGION` if you want a fixed locale
+- **Environment**: leave unset
+
+Leaving the environment unset is deliberate for a shared deployment: the server
+answers in `en` / `US` by default and any caller can ask for their own locale per
+request. Pinning `GOOGLE_RSS_LANGUAGE` on a public instance would hand everyone
+else your language. Pin the locale in your own client config instead — see
+[Install](#install).
 
 Dependencies are detected from `pyproject.toml`, and pushes to `main` redeploy
 automatically. You get `https://<server-name>.fastmcp.app/mcp`, which is exactly
