@@ -215,6 +215,22 @@ uv sync --extra examples
 uv run python examples/langgraph_test.py
 ```
 
+### Verifying a deploy
+
+A push to `main` redeploys the public instance. Check it afterwards:
+
+```bash
+python3 scripts/verify_deploy.py                       # the public instance
+python3 scripts/verify_deploy.py --origin <url>/mcp    # somewhere else
+python3 scripts/verify_deploy.py --skip-smithery       # instance only
+```
+
+Standard library only, so it runs anywhere without installing the project, and
+exits non-zero on any failure. It covers the failures that do not look like
+crashes: a server that comes up answering in the wrong locale, a tool list that
+no longer matches what the Smithery registry cached, or a blocked `SmitheryBot`
+crawler quietly emptying the listing.
+
 ## Notes
 
 - Some publishers (NYT, WSJ, and other hard paywalls) return HTTP 403 to any
