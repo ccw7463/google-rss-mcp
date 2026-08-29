@@ -1,87 +1,128 @@
 # google-rss-mcp
 
-A Model Context Protocol (MCP) server that leverages Google News RSS feeds. Built on FastMCP
+An MCP server for Google News. Search headlines in **any language**, then read the
+full text of the articles that matter.
 
 <img width="300" height="300" alt="google_rss_mcp" src="https://github.com/user-attachments/assets/ea23e670-388d-44ac-b287-e74ef8fc309a" />
 
-## MCP Server Platform
+## Tools
 
-[![Smithery](https://img.shields.io/badge/Smithery-Add%20to%20your%20AI%20tools-blue?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJMMTMuMDkgOC4yNkwyMCA5TDEzLjA5IDkuNzRMMTIgMTZMMTAuOTEgOS43NEw0IDlMMTAuOTEgOC4yNkwxMiAyWiIgZmlsbD0iY3VycmVudENvbG9yIi8+Cjwvc3ZnPgo=)](https://smithery.ai/server/@ccw7463/google-rss-mcp)
+| Tool | What it does |
+| --- | --- |
+| `search_news` | Search Google News for a keyword. Returns headlines with publisher URLs, sources, and timestamps. |
+| `get_top_headlines` | Current headlines for a topic section: `top`, `world`, `nation`, `business`, `technology`, `entertainment`, `sports`, `science`, `health`. |
+| `read_article` | Download one article and return its readable text, title, and lead image. Accepts a publisher URL or a `news.google.com` link. |
 
-**Direct Link:** https://smithery.ai/server/@ccw7463/google-rss-mcp
+Search and headline calls return **headlines only**. The agent picks what is worth
+reading and calls `read_article` on those, which keeps a typical news lookup to a
+few hundred tokens instead of tens of thousands.
 
-## Overview
+Google News wraps every link in an encrypted `news.google.com/rss/articles/...`
+redirect. This server resolves those to the real publisher URL by default, so
+answers can cite a source the user can actually open. Pass `resolve_urls: false`
+to skip resolution when you want raw speed.
 
-https://github.com/user-attachments/assets/15f66d05-9d9c-4c2c-b801-b9b6182dfada
+## Language and region
 
-This project is an MCP server that collects and provides news data using Google News RSS feeds. It's built using the FastMCP framework and includes workflow testing through LangGraph.
+Locale resolves in three tiers, most specific first:
 
-Key Features:
-- News collection from Google News RSS feeds
-- Topic-based news search (top, world, business, technology, etc.)
-- Keyword-based news search
-- AI workflow integration through LangGraph
+1. the `language` / `region` arguments on an individual tool call
+2. the `GOOGLE_RSS_LANGUAGE` / `GOOGLE_RSS_REGION` environment variables
+3. the built-in defaults, `en` / `US`
 
-## Project Structure
-
-```
-google-rss-mcp/
-├── src/
-│   ├── server.py      # FastMCP server main file
-│   ├── rss.py         # Google RSS tools class
-│   └── client.py      # MCP client implementation
-├── langgraph_test.py  # LangGraph workflow test
-├── client_test.py     # Basic client test
-└── pyproject.toml     # Project configuration and dependencies
-```
-
-## Getting Started
-
-### Installing via Smithery
-
-To install Google News RSS Feed Server for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@ccw7463/google-rss-mcp):
+Set the environment once if you always want the same locale. Korean only:
 
 ```bash
-npx -y @smithery/cli install @ccw7463/google-rss-mcp --client claude
+GOOGLE_RSS_LANGUAGE=ko
+GOOGLE_RSS_REGION=KR
 ```
 
-### 1. Install uv
+A shared deployment can leave the defaults alone and let each caller pass
+`language: "ja", region: "JP"` per request.
 
-First, you need to install the uv package manager:
+### All settings
 
-```bash
-# macOS/Linux
-curl -Ls https://astral.sh/uv/install.sh | sh
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `GOOGLE_RSS_LANGUAGE` | `en` | Google News `hl` code (`en`, `ko`, `ja`, `de`, …) |
+| `GOOGLE_RSS_REGION` | `US` | Google News `gl` code (`US`, `KR`, `JP`, `DE`, …) |
+| `GOOGLE_RSS_TIMEOUT` | `10` | Per-request timeout in seconds (1–120) |
+| `GOOGLE_RSS_MAX_CONCURRENCY` | `5` | Max simultaneous outbound requests (1–32) |
+| `GOOGLE_RSS_MAX_LENGTH` | `5000` | Default `read_article` truncation length |
+| `MCP_TRANSPORT` | `stdio` | Set to `http` to serve Streamable HTTP |
+| `PORT` | `8081` | HTTP listen port |
+| `LOG_LEVEL` | `INFO` | Python log level |
 
-# Windows
-powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+## Install
+
+### Claude Desktop / Claude Code / Cursor
+
+```json
+{
+  "mcpServers": {
+    "google-rss": {
+      "command": "uvx",
+      "args": ["--from", "git+https://github.com/ccw7463/google-rss-mcp", "google-rss-mcp"],
+      "env": {
+        "GOOGLE_RSS_LANGUAGE": "ko",
+        "GOOGLE_RSS_REGION": "KR"
+      }
+    }
+  }
+}
 ```
 
-### 2. Project Setup
+Drop the `env` block to get the `en` / `US` default.
+
+### From source
 
 ```bash
-# Clone the project
 git clone https://github.com/ccw7463/google-rss-mcp.git
 cd google-rss-mcp
-
-# Create virtual environment and install dependencies
 uv sync
+uv run google-rss-mcp
 ```
 
-### 3. Environment Variables
+## Hosting over HTTP
 
-Create a `.env` file and set your OpenAI API key:
+Remote MCP clients — and Smithery's URL publishing flow — need a Streamable HTTP
+endpoint rather than stdio.
 
 ```bash
-OPENAI_API_KEY=your_openai_api_key_here
+docker build -t google-rss-mcp .
+docker run -p 8081:8081 -e GOOGLE_RSS_LANGUAGE=ko -e GOOGLE_RSS_REGION=KR google-rss-mcp
 ```
 
-### 4. Run Tests
-
-To run the LangGraph workflow test:
+The endpoint is then `http://localhost:8081/mcp`. The image reads `$PORT`, so it
+deploys as-is to Railway, Fly.io, Render, or Cloud Run. Without Docker:
 
 ```bash
-uv run python langgraph_test.py
+MCP_TRANSPORT=http PORT=8081 uv run google-rss-mcp
 ```
 
-This command connects to the Google RSS MCP server and runs an AI news search workflow through LangGraph.
+## Development
+
+```bash
+uv sync --extra dev
+uv run pytest
+```
+
+The example LangGraph agent needs its own extras and an `OPENAI_API_KEY`:
+
+```bash
+uv sync --extra examples
+uv run python examples/langgraph_test.py
+```
+
+## Notes
+
+- Some publishers (NYT, WSJ, and other hard paywalls) return HTTP 403 to any
+  automated request. `read_article` reports that explicitly so the agent can move
+  on to another result rather than silently returning nothing.
+- Google's URL-resolution endpoint rate-limits under load. Requests are
+  concurrency-capped and retried with exponential backoff; lower
+  `GOOGLE_RSS_MAX_CONCURRENCY` if you still see throttling.
+
+## License
+
+MIT
