@@ -97,11 +97,27 @@ the server then answers in `en` / `US` and every caller can ask for their own
 locale per request. Pinning it would hand everyone else your language. Pin the
 locale in your own client config instead — see [Install](#install).
 
-### Public: Google Cloud Run (recommended)
+### Public: Railway
+
+`railway.json` in the repo root already selects the Dockerfile builder and points
+the healthcheck at `/health`, so creating a service from this repo needs only:
+
+| Setting | Value |
+| --- | --- |
+| Variables | `MCP_TRANSPORT=http`, `MCP_STATELESS=true`, `PORT=8080` |
+| Networking | Generate Domain |
+
+That yields `https://<name>.up.railway.app/mcp`. Railway keeps the service warm,
+so a registry's periodic scan never hits a cold start. At roughly 70 MB resident
+and near-zero idle CPU this costs on the order of $1/month of the Hobby plan's
+included usage.
+
+### Public: Google Cloud Run
 
 Cloud Run scales to zero, so an idle server costs nothing, and its always-free
 allowance (2M requests, 180k vCPU-seconds, 360k GiB-seconds per month) is far
-more than this workload uses.
+more than this workload uses. Pick this over Railway when you want a $0 bill and
+don't mind a 2-4s cold start on the first request after an idle period.
 
 ```bash
 GCP_PROJECT=your-project-id ./deploy/cloudrun.sh
