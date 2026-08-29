@@ -10,6 +10,7 @@ from google_rss_mcp.rss import (
     GoogleNewsClient,
     _image_from_json_ld,
     _is_plausible_lead_image,
+    _strip_source_suffix,
     clean_text,
     parse_date,
 )
@@ -218,3 +219,43 @@ def test_env_flag_parsing(monkeypatch, value, expected):
     monkeypatch.setenv("SOME_FLAG", value)
     assert _env_flag("SOME_FLAG", True) is (True if expected is None else expected)
     assert _env_flag("SOME_FLAG", False) is (False if expected is None else expected)
+
+
+@pytest.mark.parametrize(
+    ("title", "source", "expected"),
+    [
+        # The ordinary case. Google sends the publisher in <source> *and* glued
+        # to the title, so the suffix is present on essentially every headline.
+        (
+            "美, 中기업 해외 자회사에도 첨단 반도체 수출 금지 - 조선일보",
+            "조선일보",
+            "美, 中기업 해외 자회사에도 첨단 반도체 수출 금지",
+        ),
+        (
+            "Bill Gates warns on AI - The New York Times",
+            "The New York Times",
+            "Bill Gates warns on AI",
+        ),
+        # Seen live: the publisher's own <title> already ends with its name and
+        # Google appends another copy.
+        (
+            '"삼전닉스, 美 수출규제 대비" - 머니투데이 - 머니투데이',
+            "머니투데이",
+            '"삼전닉스, 美 수출규제 대비"',
+        ),
+        # A dash that is part of the headline must survive.
+        ("EU - US trade talks stall", "Reuters", "EU - US trade talks stall"),
+        # The publisher's name inside the headline is not a suffix.
+        (
+            "Reuters wins press award - The Guardian",
+            "The Guardian",
+            "Reuters wins press award",
+        ),
+        # Never strip a headline down to nothing.
+        (" - 뉴시스", "뉴시스", " - 뉴시스"),
+        # No source element: leave the title for the rpartition fallback.
+        ("Headline - Publisher", "", "Headline - Publisher"),
+    ],
+)
+def test_strip_source_suffix(title, source, expected):
+    assert _strip_source_suffix(title, source) == expected

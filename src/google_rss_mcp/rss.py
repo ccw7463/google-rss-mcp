@@ -98,6 +98,36 @@ class GoogleNewsError(RuntimeError):
     """Raised when Google News cannot be reached or returns unusable data."""
 
 
+def _strip_source_suffix(title: str, source: str) -> str:
+    """Remove the trailing ``" - Publisher"`` Google appends to every headline.
+
+    Google sends the publisher twice: once in the ``<source>`` element and again
+    glued to the end of ``<title>``. Repeating the name costs tokens in every
+    prompt it reaches, and clients that truncate a headline for display lose the
+    part that carries the meaning.
+
+    Stripped repeatedly, because the suffix can appear twice — a publisher whose
+    own ``<title>`` already ends with its name gets Google's copy on top. Never
+    strips the title down to nothing.
+
+    Args:
+        title: Headline as Google sent it.
+        source: Publisher name from the feed's ``<source>`` element.
+
+    Returns:
+        The headline without the redundant publisher suffix.
+    """
+    if not source:
+        return title
+    suffix = f" - {source}"
+    while title.endswith(suffix):
+        candidate = title[: -len(suffix)].strip()
+        if not candidate:
+            break
+        title = candidate
+    return title
+
+
 @dataclass
 class NewsItem:
     """A single headline from an RSS feed.
@@ -426,7 +456,9 @@ class GoogleNewsClient:
 
             # Google News formats titles as "Headline - Publisher".
             source = (entry.get("source") or {}).get("title", "")
-            if not source and " - " in title:
+            if source:
+                title = _strip_source_suffix(title, source)
+            elif " - " in title:
                 title, _, source = title.rpartition(" - ")
                 title, source = title.strip(), source.strip()
 
