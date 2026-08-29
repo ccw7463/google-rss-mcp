@@ -91,42 +91,15 @@ uv run google-rss-mcp
 Remote MCP clients — and Smithery's URL publishing flow — need a Streamable HTTP
 endpoint rather than stdio.
 
-### Managed: Prefect Horizon (recommended)
+Whichever host you pick, leave `GOOGLE_RSS_LANGUAGE` unset on a shared instance:
+the server then answers in `en` / `US` and every caller can ask for their own
+locale per request. Pinning it would hand everyone else your language. Pin the
+locale in your own client config instead — see [Install](#install).
 
-[Horizon](https://horizon.prefect.io) is built by the FastMCP team and has a free
-personal tier. Connect the GitHub repo, then set:
+### Public: Koyeb (recommended)
 
-- **Entrypoint**: `main.py:mcp`
-- **Environment**: leave unset
-
-Leaving the environment unset is deliberate for a shared deployment: the server
-answers in `en` / `US` by default and any caller can ask for their own locale per
-request. Pinning `GOOGLE_RSS_LANGUAGE` on a public instance would hand everyone
-else your language. Pin the locale in your own client config instead — see
-[Install](#install).
-
-Dependencies are detected from `pyproject.toml`, and pushes to `main` redeploy
-automatically. You get `https://<server-name>.fastmcp.app/mcp`, which is exactly
-the kind of URL Smithery's URL publishing flow accepts.
-
-Verify locally what Horizon will see:
-
-```bash
-uv run fastmcp inspect main.py:mcp
-```
-
-`main.py` exists so the server loads whether or not the host pip-installs the
-project itself; it puts `src/` on the path and re-exports `mcp`.
-
-Note that Horizon's free Personal tier restricts connections to members of your
-organization. Serving anonymous users — which is what a public registry listing
-means — needs its paid Developer plan. For a public deployment, use one of the
-options below.
-
-### Public and free: Koyeb
-
-Koyeb builds the `Dockerfile` straight from GitHub, needs no credit card, and
-does not sleep. Create a Web Service from this repo with:
+Koyeb builds the `Dockerfile` straight from GitHub, needs no credit card, does
+not sleep, and serves anonymous traffic. Create a Web Service from this repo:
 
 | Setting | Value |
 | --- | --- |
@@ -136,8 +109,29 @@ does not sleep. Create a Web Service from this repo with:
 | Health check | HTTP, path `/health` |
 | Environment | `PORT=8000` |
 
-Leave `GOOGLE_RSS_LANGUAGE` unset so the public instance stays locale-neutral.
 The container idles at roughly 70 MB, well inside the free instance's 512 MB.
+The resulting `https://<name>-<org>.koyeb.app/mcp` is what Smithery's URL
+publishing flow accepts.
+
+### Private: Prefect Horizon
+
+[Horizon](https://horizon.prefect.io) is built by the FastMCP team. Its free
+Personal tier is a good way to get a private remote server for yourself, but it
+admits only members of your own organization — anonymous access, which a public
+registry listing requires, is on the paid Developer plan. Use it for a personal
+instance (where pinning `GOOGLE_RSS_LANGUAGE` does make sense), not a public one.
+
+- **Entrypoint**: `main.py:mcp`
+
+Dependencies are detected from `pyproject.toml`, and pushes to `main` redeploy
+automatically. Verify locally what Horizon will see:
+
+```bash
+uv run fastmcp inspect main.py:mcp
+```
+
+`main.py` exists so the server loads whether or not the host pip-installs the
+project itself; it puts `src/` on the path and re-exports `mcp`.
 
 ### Self-hosted: Docker
 
