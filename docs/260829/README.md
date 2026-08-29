@@ -30,6 +30,7 @@ Smithery에서 사라진 `google-rss-mcp`의 원인을 규명하고, 범용 서�
 | [01-smithery-delisting.md](01-smithery-delisting.md) | 해제 원인 규명 — 플랫폼 마이그레이션 미이행 |
 | [02-refactor.md](02-refactor.md) | 범용화 리팩터링과 그 과정에서 발견한 버그 5건 |
 | [03-deployment.md](03-deployment.md) | 호스팅 선정 과정, 배포, Smithery 재등록 |
+| [04-processing-flow.md](04-processing-flow.md) | 수집·정제 처리 흐름 (헤드라인 / 본문 두 갈래) |
 
 ## 커밋
 
