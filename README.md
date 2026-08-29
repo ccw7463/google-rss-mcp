@@ -1,7 +1,10 @@
 # google-rss-mcp
 
 An MCP server for Google News. Search headlines in **any language**, then read the
-full text of the articles that matter.
+full text of the articles that matter. No API key, no signup.
+
+[![On Smithery](https://img.shields.io/badge/Smithery-%40ccw7463%2Fgoogle--rss--mcp-orange)](https://smithery.ai/server/@ccw7463/google-rss-mcp)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](#license)
 
 <img width="300" height="300" alt="google_rss_mcp" src="https://github.com/user-attachments/assets/ea23e670-388d-44ac-b287-e74ef8fc309a" />
 
@@ -59,7 +62,33 @@ A shared deployment can leave the defaults alone and let each caller pass
 
 ## Install
 
-### Claude Desktop / Claude Code / Cursor
+### Hosted — nothing to install
+
+A public instance is listed on Smithery at
+[@ccw7463/google-rss-mcp](https://smithery.ai/server/@ccw7463/google-rss-mcp).
+Open the server page and use **Add to toolbox** to connect your client; Smithery
+proxies to the instance and handles the connection for you.
+
+To point a client straight at the instance instead, with no Smithery account:
+
+```json
+{
+  "mcpServers": {
+    "google-rss": {
+      "type": "http",
+      "url": "https://google-rss-mcp-production.up.railway.app/mcp"
+    }
+  }
+}
+```
+
+The hosted instance answers in `en` / `US`; pass `language` and `region` on a
+tool call for anything else. Run it yourself (below) if you want a different
+default, or if you would rather not depend on someone else's uptime.
+
+### Local — stdio
+
+Best when you want a fixed locale. This example pins Korean:
 
 ```json
 {
