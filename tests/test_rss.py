@@ -198,3 +198,23 @@ async def test_health_route_reports_ok():
     body = response.json()
     assert body["status"] == "ok"
     assert body["default_language"] == "en"
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("1", True),
+        ("true", True),
+        ("ON", True),
+        ("0", False),
+        ("no", False),
+        ("", None),
+    ],
+)
+def test_env_flag_parsing(monkeypatch, value, expected):
+    """Boolean env vars accept the usual spellings and fall back when unset."""
+    from google_rss_mcp.server import _env_flag
+
+    monkeypatch.setenv("SOME_FLAG", value)
+    assert _env_flag("SOME_FLAG", True) is (True if expected is None else expected)
+    assert _env_flag("SOME_FLAG", False) is (False if expected is None else expected)

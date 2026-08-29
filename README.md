@@ -53,6 +53,7 @@ A shared deployment can leave the defaults alone and let each caller pass
 | `GOOGLE_RSS_MAX_CONCURRENCY` | `5` | Max simultaneous outbound requests (1–32) |
 | `GOOGLE_RSS_MAX_LENGTH` | `5000` | Default `read_article` truncation length |
 | `MCP_TRANSPORT` | `stdio` | Set to `http` to serve Streamable HTTP |
+| `MCP_STATELESS` | `true` | HTTP only. Keep on for autoscaled hosts; off enables SSE resumability |
 | `PORT` | `8081` | HTTP listen port |
 | `LOG_LEVEL` | `INFO` | Python log level |
 
@@ -96,22 +97,30 @@ the server then answers in `en` / `US` and every caller can ask for their own
 locale per request. Pinning it would hand everyone else your language. Pin the
 locale in your own client config instead — see [Install](#install).
 
-### Public: Koyeb (recommended)
+### Public: Google Cloud Run (recommended)
 
-Koyeb builds the `Dockerfile` straight from GitHub, needs no credit card, does
-not sleep, and serves anonymous traffic. Create a Web Service from this repo:
+Cloud Run scales to zero, so an idle server costs nothing, and its always-free
+allowance (2M requests, 180k vCPU-seconds, 360k GiB-seconds per month) is far
+more than this workload uses.
 
-| Setting | Value |
-| --- | --- |
-| Builder | Dockerfile |
-| Instance | Free |
-| Exposed port | `8000` |
-| Health check | HTTP, path `/health` |
-| Environment | `PORT=8000` |
+```bash
+GCP_PROJECT=your-project-id ./deploy/cloudrun.sh
+```
 
-The container idles at roughly 70 MB, well inside the free instance's 512 MB.
-The resulting `https://<name>-<org>.koyeb.app/mcp` is what Smithery's URL
-publishing flow accepts.
+The script builds the `Dockerfile`, deploys with `--allow-unauthenticated`, caps
+`--max-instances` so a spike cannot run up a bill, and prints the endpoint. You
+can do the same from the Cloud Run console with "Deploy from repository"; set the
+container port to `8080`, the health check path to `/health`, and the environment
+to `MCP_TRANSPORT=http` and `MCP_STATELESS=true`.
+
+The resulting `https://<service>-<hash>-<region>.a.run.app/mcp` is what Smithery's
+URL publishing flow accepts. The container idles at roughly 70 MB.
+
+**Why stateless.** MCP session state lives in one process's memory. On any
+autoscaled host, a follow-up request routed to a second instance would fail to
+find its session. These tools need no session state, so `MCP_STATELESS=true`
+(the default for HTTP) removes the problem rather than pinning the service to a
+single instance.
 
 ### Private: Prefect Horizon
 

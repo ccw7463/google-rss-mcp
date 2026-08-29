@@ -268,12 +268,37 @@ async def health(_request: Request) -> JSONResponse:
     )
 
 
+def _env_flag(name: str, default: bool) -> bool:
+    """Read a boolean environment variable.
+
+    Args:
+        name: Variable name.
+        default: Value to use when unset or unrecognized.
+
+    Returns:
+        The parsed flag.
+    """
+    raw = os.environ.get(name, "").strip().lower()
+    if raw in ("1", "true", "yes", "on"):
+        return True
+    if raw in ("0", "false", "no", "off"):
+        return False
+    return default
+
+
 def main() -> None:
     """Run the server over the transport named by ``MCP_TRANSPORT``.
 
     Defaults to ``stdio`` for local clients. Set ``MCP_TRANSPORT=http`` to serve
     Streamable HTTP on ``0.0.0.0:$PORT/mcp``, which is what a hosted deployment
     (and Smithery's URL publishing flow) needs.
+
+    HTTP defaults to stateless mode. Session state lives in one process's
+    memory, so on any autoscaled host — Cloud Run especially — a follow-up
+    request routed to a second instance would fail to find its session. These
+    three tools need no session state, so dropping it is free. Set
+    ``MCP_STATELESS=false`` for a single-instance deployment that wants SSE
+    resumability.
     """
     logging.basicConfig(
         level=os.environ.get("LOG_LEVEL", "INFO").upper(),
@@ -287,6 +312,7 @@ def main() -> None:
             host=os.environ.get("HOST", "0.0.0.0"),
             port=int(os.environ.get("PORT", "8081")),
             path="/mcp",
+            stateless_http=_env_flag("MCP_STATELESS", True),
         )
     else:
         mcp.run(transport="stdio")
